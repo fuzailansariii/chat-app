@@ -2,7 +2,6 @@
 
 import React from "react";
 import Input from "../../components/Input";
-import UserIcon from "../../components/UserIcon";
 import EmailIcon from "../../components/EmailIcon";
 import PasswordIcon from "../../components/PasswordIcon";
 import { useForm } from "react-hook-form";

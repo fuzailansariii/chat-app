@@ -9,15 +9,18 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
-    "@types/ws": "^8.18.0"
+    "@types/ws": "^8.18.0",
+    "@repo/auth": "workspace:*"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@auth/core": "^0.34.2",
     "dotenv": "^16.4.7",
     "next-auth": "^4.24.11",
+    "web": "^0.0.2",
     "ws": "^8.18.1"
   }
 }
