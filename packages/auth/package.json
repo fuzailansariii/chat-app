@@ -4,13 +4,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": ""
   },
   "devDependencies": {
     "@repo/common": "workspace:*",
     "@repo/db": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@types/bcrypt": "^5.0.2"
+    "@types/bcrypt": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.9",
+    "jsonwebtoken": "^9.0.2"
   },
   "exports": {
     "./options": "./src/options.ts"
@@ -22,6 +24,7 @@
     "@auth/prisma-adapter": "^2.8.0",
     "@next-auth/prisma-adapter": "^1.0.7",
     "bcrypt": "^5.1.1",
+    "dotenv": "^16.4.7",
     "next-auth": "^4.24.11"
   }
 }

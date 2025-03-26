@@ -15,4 +15,8 @@ const LoginSchema = z.object({
     .min(6, { message: "Password must be at least 6 characters long" }),
 });
 
-export { SignUpSchema, LoginSchema };
+const RoomSchema = z.object({
+  name: z.string().min(1, { message: "Room name is required" }),
+});
+
+export { SignUpSchema, LoginSchema, RoomSchema };

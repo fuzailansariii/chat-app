@@ -20,6 +20,7 @@
     "@tailwindcss/postcss": "^4.0.14",
     "axios": "^1.8.3",
     "bcrypt": "^5.1.1",
+    "jose": "^6.0.10",
     "next": "^15.2.1",
     "next-auth": "^4.24.11",
     "postcss": "^8.5.3",
@@ -34,11 +35,13 @@
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/bcrypt": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.13.9",
     "@types/react": "19.0.10",
     "@types/react-dom": "19.0.4",
     "daisyui": "^5.0.6",
     "eslint": "^9.22.0",
+    "jsonwebtoken": "^9.0.2",
     "typescript": "5.8.2"
   }
 }

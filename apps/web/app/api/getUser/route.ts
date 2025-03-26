@@ -1,20 +1,61 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
 import { authOptions } from "@repo/auth/options";
+import { decode, getToken } from "next-auth/jwt";
+// import { DecodedToken } from "@repo/auth/decodeToken";
 
-export async function GET(request: Request) {
+export async function GET(req: NextRequest) {
+  const session = await getServerSession({ req, ...authOptions });
+  if (!session) {
+    return NextResponse.json(
+      { success: false, message: "User is not logged in" },
+      { status: 401 }
+    );
+  }
+
   try {
-    const session = await getServerSession(authOptions);
+    const AuthSecret = process.env.NEXTAUTH_SECRET;
 
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!AuthSecret) {
+      return NextResponse.json({
+        success: false,
+        message: "Invalid auth secret",
+      });
     }
 
-    // Return the session user
-    return NextResponse.json({ user: session.user });
-  } catch (error) {
+    // Get the raw token
+    const rawToken = await getToken({
+      req,
+      secret: AuthSecret,
+      raw: true,
+    });
+
+    if (!rawToken) {
+      return NextResponse.json(
+        { success: false, message: "No token found" },
+        { status: 401 }
+      );
+    }
+
+    const decoded = await decode({
+      token: rawToken,
+      secret: AuthSecret,
+    });
+
+    return NextResponse.json({
+      success: true,
+      user: session.user,
+      rawToken: rawToken,
+      decodedToken: decoded ?? "Decryption failed",
+    });
+  } catch (error: any) {
+    console.error("Error:", error.message);
     return NextResponse.json(
-      { error: "Failed to fetch user" },
+      {
+        success: false,
+        message: "Failed to process token",
+        error: error.message,
+      },
       { status: 500 }
     );
   }
