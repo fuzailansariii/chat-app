@@ -15,12 +15,25 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   room      Room[]
+  chat      Chat[]
 }
 
 model Room {
   id        String   @id @default(uuid())
   name      String
-  User      User?    @relation(fields: [createdBy], references: [id])
+  joiningId String?  @unique
+  user      User?    @relation(fields: [createdBy], references: [id])
   createdBy String?
+  createdAt DateTime @default(now())
+  chat      Chat[]
+}
+
+model Chat {
+  id        String   @id @default(uuid())
+  message   String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  roomId    String
+  room      Room     @relation(fields: [roomId], references: [id])
   createdAt DateTime @default(now())
 }

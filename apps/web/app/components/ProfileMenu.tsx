@@ -10,8 +10,8 @@ export default function ProfileMenu() {
   return (
     <div className="flex gap-2">
       <div className="flex justify-center items-center">
-        <Link href={"/rooms"} className="btn btn-ghost">
-          Rooms
+        <Link href={"/room"} className="btn btn-ghost">
+          Room
         </Link>
       </div>
       <div className="dropdown dropdown-end hidden md:block">

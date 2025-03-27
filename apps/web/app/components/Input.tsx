@@ -8,7 +8,7 @@ interface InputTypeProps {
   label: string;
   register: UseFormRegisterReturn;
   error?: FieldError;
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
 }
 
 export default function Input({
