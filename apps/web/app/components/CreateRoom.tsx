@@ -69,8 +69,8 @@ export default function CreateRoom({
           <div className="flex flex-col gap-4 mt-4 justify-center items-center">
             <input
               {...register("name")}
-              type="text"
-              placeholder="Room Name"
+              type={type}
+              placeholder={placeholder}
               className="input input-bordered w-full md:w-2/3 rounded-md"
             />
             {errors.name && (
@@ -82,7 +82,7 @@ export default function CreateRoom({
               disabled={isSubmitting}
               className="btn btn-outline w-full md:w-2/3 rounded-md"
             >
-              {isSubmitting ? "Joining..." : "Join Room"}
+              {isSubmitting ? "Creating..." : "Create Room"}
             </button>
           </div>
         </form>

@@ -4,8 +4,18 @@ import React, { useRef, useState, useEffect } from "react";
 import RoomCard from "../../components/RoomCard";
 import CreateRoom from "../../components/CreateRoom";
 import JoinRoom from "../../components/JoinRoom";
+import axios from "axios";
+
+type Room = {
+  id: string;
+  name: string;
+  joiningId: string | null;
+  createdBy?: string | null;
+  createdAt?: string;
+};
 
 export default function Room() {
+  const [rooms, setRooms] = useState<Room[]>([]);
   const [modelType, setModelType] = useState<"create" | "join" | null>(null);
   const modelRef = useRef<HTMLDialogElement | null>(null);
 
@@ -15,6 +25,18 @@ export default function Room() {
       modelRef.current.showModal();
     }
   }, [modelType]);
+
+  useEffect(() => {
+    const fetchRooms = async () => {
+      const response = await axios.get("/api/rooms");
+      if (response) {
+        const fetchedRooms = response.data.rooms;
+        // console.log("Rooms: ", fetchedRooms);
+        setRooms(fetchedRooms);
+      }
+    };
+    fetchRooms();
+  }, []);
 
   const handleOpenModal = (type: "create" | "join") => {
     setModelType(type); // Set the type, and useEffect will handle showing the modal
@@ -70,12 +92,13 @@ export default function Room() {
         </dialog>
       </div>
       <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-4 mt-10">
-        <RoomCard cardTitle="Room 1" cardDescription="This is the first room" />
-        <RoomCard
-          cardTitle="Room 2"
-          cardDescription="This is the second room"
-        />
-        <RoomCard cardTitle="Room 3" cardDescription="This is the third room" />
+        {rooms.map((room) => (
+          <RoomCard
+            key={room.id}
+            cardTitle={room.name}
+            cardDescription={room.joiningId ?? "No joining ID"}
+          />
+        ))}
       </div>
     </div>
   );

@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@repo/db/client";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@repo/auth/options";
 import generateId from "../../utils/GenerateUniqueId";
+import { auth } from "@repo/auth/checkAuth";
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
@@ -42,7 +41,7 @@ export async function POST(req: NextRequest) {
         success: true,
         message: "Room created successfully",
         room: {
-          roomId: room.id,
+          roomJoiningId: room.joiningId,
         },
       },
       { status: 201 }

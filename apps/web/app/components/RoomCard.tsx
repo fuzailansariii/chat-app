@@ -16,7 +16,9 @@ export default function RoomCard({
           <h2 className="card-title">{cardTitle}</h2>
           <button className="btn btn-outline btn-md">Join</button>
         </div>
-        <p>{cardDescription}</p>
+        <p>
+          Joining Id: <span className="font-semibold">{cardDescription}</span>
+        </p>
       </div>
     </div>
   );

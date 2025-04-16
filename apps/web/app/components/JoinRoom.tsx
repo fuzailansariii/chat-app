@@ -61,8 +61,8 @@ export default function JoinRoom({
           <div className="flex flex-col gap-4 mt-4 justify-center items-center">
             <input
               {...register("joiningId")}
-              type="text"
-              placeholder="Room Id"
+              type={type}
+              placeholder={placeholder}
               className="input input-bordered w-full md:w-2/3 rounded-md"
             />
             {errors.joiningId && (

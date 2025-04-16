@@ -15,7 +15,8 @@
     "jsonwebtoken": "^9.0.2"
   },
   "exports": {
-    "./options": "./src/options.ts"
+    "./options": "./src/options.ts",
+    "./checkAuth": "./src/checkAuth.ts"
   },
   "keywords": [],
   "author": "",
