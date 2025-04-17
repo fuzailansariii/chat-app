@@ -26,7 +26,7 @@ export default function SignUp() {
   });
 
   const onSubmit = async (data: z.infer<typeof SignUpSchema>) => {
-    console.log("Submitted data:", data);
+    // console.log("Submitted data:", data);
     // API call
     try {
       const response = await axios.post("/api/auth/sign-up", data);

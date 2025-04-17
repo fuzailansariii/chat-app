@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     }
     // const userId = session.user.id;
     const response = await prisma.room.findMany();
-    console.log("response: ", response);
+    // console.log("response: ", response);
     return NextResponse.json(
       {
         success: true,

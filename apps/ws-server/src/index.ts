@@ -6,14 +6,31 @@ dotenv.config();
 
 const wss = new WebSocketServer({ port: 8080 });
 
-wss.on("connection", async (ws, request) => {
-  const secret = process.env.NEXTAUTH_SECRET;
-  if (!secret) {
-    console.error("❌ Missing NEXTAUTH_SECRET");
-    ws.close(1011, "Server Configuration Error");
-    return;
-  }
+interface User {
+  ws: WebSocket;
+  userId: string;
+  rooms: string[];
+}
 
+const users: User[] = [];
+
+async function checkUser({ token }: { token: string }) {
+  const secret = process.env.NEXTAUTH_SECRET;
+  if (!secret || !token) {
+    console.error("❌ Missing NEXTAUTH_SECRET");
+    // ws.close(1011, "Server Configuration Error");
+    return null;
+  }
+  const decodedToken = await decode({ token, secret });
+  if (!decodedToken || !decodedToken.id) {
+    console.error("❌ Invalid or expired token");
+    return null;
+  }
+  const userId = decodedToken.id;
+  return userId;
+}
+
+wss.on("connection", async (ws, request) => {
   const url = request.url;
   if (!url) {
     console.error("❌ Missing URL in request");
@@ -33,25 +50,24 @@ wss.on("connection", async (ws, request) => {
 
   try {
     //  Decode and verify token
-    const decodedToken = await decode({ token, secret });
+    const userId = await checkUser({ token });
 
-    if (!decodedToken || !decodedToken?.id) {
-      console.error("❌ Invalid or expired token");
-      ws.close(1008, "Invalid Token");
+    if (!userId) {
+      ws.close(1008, "Unauthorized");
       return;
     }
 
-    console.log(`User ${decodedToken.id} connected`);
+    console.log(`User ${userId} connected`);
 
     // WebSocket message handling
     ws.on("message", (message) => {
       console.log("📩 Received message:", message.toString());
-      ws.send("Pong");
+      ws.send(`Pong ${userId}`);
     });
 
     ws.on("close", (code, reason) => {
       console.log(
-        `🔴 User ${decodedToken.id} disconnected (Code: ${code}, Reason: ${reason})`
+        `🔴 User ${userId} disconnected (Code: ${code}, Reason: ${reason})`
       );
     });
 
