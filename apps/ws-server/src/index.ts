@@ -1,20 +1,16 @@
 import { decode } from "next-auth/jwt";
-import { WebSocketServer } from "ws";
+import { WebSocketServer, WebSocket } from "ws";
+import prisma from "@repo/db/client";
 import dotenv from "dotenv";
+import redis from "./redis";
 
 dotenv.config();
 
 const wss = new WebSocketServer({ port: 8080 });
 
-interface User {
-  ws: WebSocket;
-  userId: string;
-  rooms: string[];
-}
+const socketUserMap = new Map<WebSocket, { userId: string }>();
 
-const users: User[] = [];
-
-async function checkUser({ token }: { token: string }) {
+export async function checkUser({ token }: { token: string }) {
   const secret = process.env.NEXTAUTH_SECRET;
   if (!secret || !token) {
     console.error("❌ Missing NEXTAUTH_SECRET");
@@ -26,8 +22,13 @@ async function checkUser({ token }: { token: string }) {
     console.error("❌ Invalid or expired token");
     return null;
   }
-  const userId = decodedToken.id;
+  const userId = String(decodedToken.id);
   return userId;
+}
+export async function getRoomByJoiningId(joiningId: string) {
+  return await prisma.room.findUnique({
+    where: { joiningId },
+  });
 }
 
 wss.on("connection", async (ws, request) => {
@@ -59,10 +60,49 @@ wss.on("connection", async (ws, request) => {
 
     console.log(`User ${userId} connected`);
 
+    // adding user to the socketUserMap after verifying authenticated user
+    socketUserMap.set(ws, { userId });
+
     // WebSocket message handling
-    ws.on("message", (message) => {
-      console.log("📩 Received message:", message.toString());
-      ws.send(`Pong ${userId}`);
+    ws.on("message", async (message) => {
+      let data;
+      try {
+        data = JSON.parse(message.toString());
+      } catch {
+        return ws.send("Invalid message format");
+      }
+
+      const session = socketUserMap.get(ws);
+
+      if (!session) {
+        return ws.send("Session not found");
+      }
+      const { userId } = session;
+      if (data.type === "join_room") {
+        const joiningId = data.joiningId;
+
+        const room = await getRoomByJoiningId(joiningId);
+        if (!room) {
+          return ws.send("❌ Room not found");
+        }
+        // extract roomId
+        const roomId = room.id;
+        await redis.sadd(`room:${roomId}`, userId);
+
+        ws.send(`Joined room ${roomId}`);
+      }
+
+      if (data.type === "message") {
+        const { roomId, message } = data;
+
+        if (!roomId || !message) {
+          return ws.send("Missing roomId or Message");
+        }
+        const isMember = await redis.sismember(`room:${roomId}`, userId);
+        if (!isMember) {
+          return ws.send("You are not part of this room");
+        }
+      }
     });
 
     ws.on("close", (code, reason) => {
