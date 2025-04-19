@@ -139,6 +139,9 @@ importers:
       '@repo/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@repo/redis':
+        specifier: workspace:*
+        version: link:../../packages/redis
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
@@ -247,6 +250,19 @@ importers:
       typescript-eslint:
         specifier: ^8.26.0
         version: 8.28.0(eslint@9.23.0(jiti@2.4.2))(typescript@5.8.2)
+
+  packages/redis:
+    dependencies:
+      dotenv:
+        specifier: ^16.4.7
+        version: 16.4.7
+      ioredis:
+        specifier: ^5.6.1
+        version: 5.6.1
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
 
   packages/typescript-config: {}
 

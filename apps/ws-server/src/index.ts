@@ -2,13 +2,14 @@ import { decode } from "next-auth/jwt";
 import { WebSocketServer, WebSocket } from "ws";
 import prisma from "@repo/db/client";
 import dotenv from "dotenv";
-import redis from "./redis";
+import redis from "@repo/redis/index";
 
 dotenv.config();
 
 const wss = new WebSocketServer({ port: 8080 });
 
 const socketUserMap = new Map<WebSocket, { userId: string }>();
+const clientSubscriptions = new Map<WebSocket, Set<string>>();
 
 export async function checkUser({ token }: { token: string }) {
   const secret = process.env.NEXTAUTH_SECRET;
@@ -88,12 +89,17 @@ wss.on("connection", async (ws, request) => {
         // extract roomId
         const roomId = room.id;
         await redis.sadd(`room:${roomId}`, userId);
+        // if (!clientSubscriptions.has(ws)) {
+        //   clientSubscriptions.set(ws, new Set());
+        // }
+        // clientSubscriptions.get(ws)!.add(roomId);
+        clientSubscriptions.get(ws)?.add(roomId);
 
         ws.send(`Joined room ${roomId}`);
       }
 
       if (data.type === "message") {
-        const { roomId, message } = data;
+        const { roomId, message: userMessage } = data;
 
         if (!roomId || !message) {
           return ws.send("Missing roomId or Message");
@@ -102,6 +108,21 @@ wss.on("connection", async (ws, request) => {
         if (!isMember) {
           return ws.send("You are not part of this room");
         }
+
+        // Brodcast message to all the sockets in this room.
+        for (const [client, subsribedRooms] of clientSubscriptions.entries()) {
+          if (subsribedRooms.has(userId)) {
+            const sender = socketUserMap.get(ws);
+            client.send(
+              JSON.stringify({
+                type: "new_message",
+                roomId,
+                from: sender?.userId,
+                message: userMessage,
+              })
+            );
+          }
+        }
       }
     });
 
@@ -109,6 +130,8 @@ wss.on("connection", async (ws, request) => {
       console.log(
         `🔴 User ${userId} disconnected (Code: ${code}, Reason: ${reason})`
       );
+      socketUserMap.delete(ws);
+      clientSubscriptions.delete(ws);
     });
 
     ws.on("error", (error) => {
