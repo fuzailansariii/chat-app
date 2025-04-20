@@ -15,6 +15,7 @@ type Room = {
 };
 
 export default function Room() {
+  const [token, setToken] = useState("");
   const [rooms, setRooms] = useState<Room[]>([]);
   const [modelType, setModelType] = useState<"create" | "join" | null>(null);
   const modelRef = useRef<HTMLDialogElement | null>(null);
@@ -92,6 +93,20 @@ export default function Room() {
         </dialog>
       </div>
       <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-4 mt-10">
+        {
+          <div>
+            <button
+              className="cursor-pointer  p-4 rounded-lg border"
+              onClick={async () => {
+                const response = await axios.get("/api/getUser");
+                setToken(response.data.rawToken);
+              }}
+            >
+              get user raw token
+            </button>
+            <p>{token}</p>
+          </div>
+        }
         {rooms.map((room) => (
           <RoomCard
             key={room.id}

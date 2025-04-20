@@ -1,36 +1,14 @@
-import { decode } from "next-auth/jwt";
-import { WebSocketServer, WebSocket } from "ws";
+import { WebSocketServer } from "ws";
 import prisma from "@repo/db/client";
 import dotenv from "dotenv";
 import redis from "@repo/redis/index";
+import { clientSubscriptions, socketUserMap } from "./utils/map";
+import { getRoomByJoiningId } from "./utils/getRoom";
+import { checkUser } from "./utils/checkAuth";
 
 dotenv.config();
 
 const wss = new WebSocketServer({ port: 8080 });
-
-const socketUserMap = new Map<WebSocket, { userId: string }>();
-const clientSubscriptions = new Map<WebSocket, Set<string>>();
-
-export async function checkUser({ token }: { token: string }) {
-  const secret = process.env.NEXTAUTH_SECRET;
-  if (!secret || !token) {
-    console.error("❌ Missing NEXTAUTH_SECRET");
-    // ws.close(1011, "Server Configuration Error");
-    return null;
-  }
-  const decodedToken = await decode({ token, secret });
-  if (!decodedToken || !decodedToken.id) {
-    console.error("❌ Invalid or expired token");
-    return null;
-  }
-  const userId = String(decodedToken.id);
-  return userId;
-}
-export async function getRoomByJoiningId(joiningId: string) {
-  return await prisma.room.findUnique({
-    where: { joiningId },
-  });
-}
 
 wss.on("connection", async (ws, request) => {
   const url = request.url;
@@ -63,6 +41,8 @@ wss.on("connection", async (ws, request) => {
 
     // adding user to the socketUserMap after verifying authenticated user
     socketUserMap.set(ws, { userId });
+    clientSubscriptions.set(ws, new Set());
+    const subscriber = redis.duplicate();
 
     // WebSocket message handling
     ws.on("message", async (message) => {
@@ -88,48 +68,65 @@ wss.on("connection", async (ws, request) => {
         }
         // extract roomId
         const roomId = room.id;
-        await redis.sadd(`room:${roomId}`, userId);
-        // if (!clientSubscriptions.has(ws)) {
-        //   clientSubscriptions.set(ws, new Set());
-        // }
-        // clientSubscriptions.get(ws)!.add(roomId);
-        clientSubscriptions.get(ws)?.add(roomId);
+        await redis.sadd(`room:${roomId}:users`, userId);
+        if (!clientSubscriptions.get(ws)!.has(roomId)) {
+          await subscriber.subscribe(`room:${roomId}`);
+          clientSubscriptions.get(ws)!.add(roomId);
+        }
 
-        ws.send(`Joined room ${roomId}`);
+        ws.send(`Joined roomId: ${roomId}`);
       }
 
       if (data.type === "message") {
-        const { roomId, message: userMessage } = data;
+        const { roomId, message: content } = data;
 
-        if (!roomId || !message) {
-          return ws.send("Missing roomId or Message");
+        if (!roomId || !content) {
+          return ws.send("Missing roomId or content");
         }
-        const isMember = await redis.sismember(`room:${roomId}`, userId);
+
+        const isMember = await redis.sismember(`room:${roomId}:users`, userId);
         if (!isMember) {
           return ws.send("You are not part of this room");
         }
 
-        // Brodcast message to all the sockets in this room.
-        for (const [client, subsribedRooms] of clientSubscriptions.entries()) {
-          if (subsribedRooms.has(userId)) {
-            const sender = socketUserMap.get(ws);
-            client.send(
-              JSON.stringify({
-                type: "new_message",
-                roomId,
-                from: sender?.userId,
-                message: userMessage,
-              })
-            );
-          }
-        }
+        const msg = JSON.stringify({
+          type: "new_message", // Kept to match your frontend
+          roomId,
+          userId,
+          message: content,
+          timestamp: Date.now(),
+        });
+        await redis.publish(`room:${roomId}`, msg);
+
+        await prisma.chat.create({
+          data: {
+            roomId,
+            userId,
+            message: content,
+          },
+        });
       }
     });
 
-    ws.on("close", (code, reason) => {
-      console.log(
-        `🔴 User ${userId} disconnected (Code: ${code}, Reason: ${reason})`
-      );
+    subscriber.on("message", (channel, message) => {
+      ws.send(message);
+    });
+
+    ws.on("close", async () => {
+      console.log(`🔴 User ${userId} disconnected`);
+      const rooms = clientSubscriptions.get(ws) || new Set();
+      for (const roomId of rooms) {
+        await redis.srem(`room:${roomId}:users`, userId);
+        const leaveMsg = JSON.stringify({
+          type: "user_left",
+          userId,
+          roomId,
+          timestamp: Date.now(),
+        });
+        await redis.publish(`room:${roomId}`, leaveMsg);
+      }
+      await subscriber.unsubscribe();
+      await subscriber.quit();
       socketUserMap.delete(ws);
       clientSubscriptions.delete(ws);
     });
