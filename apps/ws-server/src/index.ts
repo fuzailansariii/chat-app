@@ -60,21 +60,26 @@ wss.on("connection", async (ws, request) => {
       }
       const { userId } = session;
       if (data.type === "join_room") {
-        const joiningId = data.joiningId;
+        try {
+          const joiningId = data.joiningId;
 
-        const room = await getRoomByJoiningId(joiningId);
-        if (!room) {
-          return ws.send("❌ Room not found");
-        }
-        // extract roomId
-        const roomId = room.id;
-        await redis.sadd(`room:${roomId}:users`, userId);
-        if (!clientSubscriptions.get(ws)!.has(roomId)) {
-          await subscriber.subscribe(`room:${roomId}`);
-          clientSubscriptions.get(ws)!.add(roomId);
-        }
+          const room = await getRoomByJoiningId(joiningId);
+          if (!room) {
+            return ws.send("❌ Room not found");
+          }
+          // extract roomId
+          const roomId = room.id;
+          await redis.sadd(`room:${roomId}:users`, userId);
+          if (!clientSubscriptions.get(ws)!.has(roomId)) {
+            await subscriber.subscribe(`room:${roomId}`);
+            clientSubscriptions.get(ws)!.add(roomId);
+          }
 
-        ws.send(`Joined roomId: ${roomId}`);
+          ws.send(`Joined roomId: ${roomId}`);
+        } catch (error) {
+          ws.send("Invalid Joining ID.");
+          ws.close();
+        }
       }
 
       if (data.type === "message") {

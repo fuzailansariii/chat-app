@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@repo/auth/options";
 import { decode, getToken } from "next-auth/jwt";
-// import { DecodedToken } from "@repo/auth/decodeToken";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession({ req, ...authOptions });
