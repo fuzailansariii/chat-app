@@ -93,7 +93,7 @@ export default function Room() {
         </dialog>
       </div>
       <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-4 mt-10">
-        {
+        {/* {
           <div>
             <button
               className="cursor-pointer  p-4 rounded-lg border"
@@ -106,7 +106,7 @@ export default function Room() {
             </button>
             <p>{token}</p>
           </div>
-        }
+        } */}
         {rooms.map((room) => (
           <RoomCard
             key={room.id}

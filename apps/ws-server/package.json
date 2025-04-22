@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc -b",
-    "start": "node dist/index.js",
+    "start": "node dist/index.js && node dist/test-client.js",
     "dev": "npm run build && npm run start"
   },
   "devDependencies": {
@@ -12,6 +12,7 @@
     "@repo/db": "workspace:*",
     "@repo/redis": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@types/node": "^22.13.9",
     "@types/ws": "^8.18.0"
   },
   "keywords": [],
@@ -20,9 +21,12 @@
   "description": "",
   "dependencies": {
     "@auth/core": "^0.34.2",
+    "@types/socket.io-client": "^3.0.0",
     "dotenv": "^16.4.7",
     "ioredis": "^5.6.1",
     "next-auth": "^4.24.11",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
     "web": "^0.0.2",
     "ws": "^8.18.1"
   }

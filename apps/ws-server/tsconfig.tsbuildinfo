@@ -1,1 +1,1 @@
-{"root":["./src/index.ts","./src/utils/checkauth.ts","./src/utils/getroom.ts","./src/utils/map.ts"],"version":"5.8.2"}
+{"root":["./src/index.ts","./src/handlers/disconnect.ts","./src/handlers/joinroom.ts","./src/handlers/message.ts","./src/socket/authsocketmiddleware.ts","./src/socket/checkauth.ts","./src/socket/getroom.ts"],"version":"5.8.2"}
